@@ -114,7 +114,10 @@ def knn(point, train_set, k):
     diffMat = diffMat ** 0.5
     # 对距离排序，返回排序数组下标
     sortedInd = diffMat.argsort()
-    return sortedInd[0:k]
+    dist = []
+    for cur in range(k):
+        dist.append(1.0/diffMat[sortedInd[cur]])
+    return sortedInd[0:k], dist
     # # 存放最终的分类结果及相应的结果投票数
     # classCount = {}
     # for i in range(k):
@@ -131,11 +134,11 @@ def verify(verify, train, K):
     :param K: top k nearest neighbor
     :return:  deviation: 误差绝对值
     """
-    knn_res = knn(verify, train, K)
-    res = train[knn_res[0]]
-    for t in range(1,K):
-        res += train[knn_res[t]]
-    res = res / 3
+    knn_res, dist = knn(verify, train, K)
+    res = train[knn_res[0]]*dist[0]
+    for t in range(1, K):
+        res += train[knn_res[t]]*dist[t]
+    res = res / sum(dist)
     res = (res - verify)
     res = numpy.fabs(res)
     res = numpy.mean(res)
@@ -147,7 +150,7 @@ def verifyAll(verification, train, K):
     for cur in range(verification.shape[0]):
         res += verify(verification[cur, :], train, K)
     print("deviation : %f（绝对值）,verification count = %d" % (res, verification.shape[0]))
-    print("mean = %f,percent = %f%%" % (res / verification.shape[0], res / verification.shape[0] * 5))
+    print("mean = %f,percent = %f%%,current K = %d" % (res / verification.shape[0], res / verification.shape[0] * 5,K))
 
 
 if __name__ == "__main__":
