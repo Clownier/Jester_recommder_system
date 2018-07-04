@@ -134,12 +134,12 @@ def verify(verify, train, K):
     :param K: top k nearest neighbor
     :return:  deviation: 误差绝对值
     """
-    knn_res, dist = knn(verify, train, K)
-    res = train[knn_res[0]]*dist[0]
+    knn_res, dist = knn(verify[0:80], train[:, 0:80], K)
+    res = train[knn_res[0], 80:]*dist[0]
     for t in range(1, K):
-        res += train[knn_res[t]]*dist[t]
+        res += train[knn_res[t], 80:]*dist[t]
     res = res / sum(dist)
-    res = (res - verify)
+    res = (res - verify[80:])
     res = numpy.fabs(res)
     res = numpy.mean(res)
     return res * 20
