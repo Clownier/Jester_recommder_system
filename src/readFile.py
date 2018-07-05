@@ -76,7 +76,6 @@ def get_data(data):
         test_set[cur, :] = data[test[cur], :]
     return test_set, verification_set, train_set
 
-    return
 
 
 def training(data, n_clusters=8):
