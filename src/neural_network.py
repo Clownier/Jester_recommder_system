@@ -1,5 +1,7 @@
 import random
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
+from sklearn import svm
 import numpy
 import xlrd
 
@@ -75,8 +77,8 @@ def naive_bayes_gaussian(train_martrix, label_train, predict_point, clf=None):
         clf = GaussianNB()
         clf.fit(train_martrix, label_train)
     predict_label = clf.predict(predict_point)
-    predict_proba = numpy.max(clf.predict_proba(predict_point))
-    return predict_label, predict_proba
+    # predict_proba = numpy.max(clf.predict_proba(predict_point))
+    return predict_label, 0
 
 
 def verify(train_array, train_label, predecit_point, point_label, IOshow=False, clf=None):
@@ -91,7 +93,7 @@ def verify(train_array, train_label, predecit_point, point_label, IOshow=False, 
     return point_label * predict_label[0] > 0
 
 
-def verifyAll(train_array, verify_array):
+def verifyAll(train_array, verify_array, clf=GaussianNB()):
     train_martrix = train_array[:, 1:]
     verification_martrix = verify_array[:, 1:]
     train = train_martrix[:, :-1]
@@ -102,11 +104,11 @@ def verifyAll(train_array, verify_array):
     label = label.reshape(-1, 1)
     count = 0
     sum = verification_martrix.shape[0]
-    clf = GaussianNB()
+    # clf = GaussianNB()
     clf.fit(train, label)
     for cur in range(sum):
         point = verification_martrix[cur, :-1]
-        point = point.reshape(-1, 1)
+        point = point.reshape(1, 99)
         if verify(train, label, point, verification_martrix[cur, -1], clf=clf):
             count += 1
     print("test num : %d, succ num : %d, succ precent: %f" % (sum, count, count * 1.0 / sum))
@@ -118,9 +120,9 @@ def read_all_file():
     data = numpy.vstack((data, read_file(file_path=r"./../DATA/jester-data-3.xls")))
     return data
 
-# if __name__ == "__main__":
-#     data = read_all_file()
-#     test_martrix, verification_martrix, train_martrix = get_data(data, 0.1)
-#     print("Number(test,verification,train):(%d,%d,%d)" % (
-#         test_martrix.shape[0], verification_martrix.shape[0], train_martrix.shape[0]))
-#     verifyAll(train_martrix, verification_martrix)
+if __name__ == "__main__":
+    data = read_all_file()
+    test_martrix, verification_martrix, train_martrix = get_data(data, 0.1)
+    print("Number(test,verification,train):(%d,%d,%d)" % (
+        test_martrix.shape[0], verification_martrix.shape[0], train_martrix.shape[0]))
+    verifyAll(train_martrix, verification_martrix, clf=MLPClassifier())
