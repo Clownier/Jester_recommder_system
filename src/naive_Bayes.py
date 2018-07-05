@@ -64,22 +64,23 @@ def get_data(data_martrix, verification_proportion=0.1):
     return test_martrix, verification_martrix, train_martrix
 
 
-def naive_bayes_gaussian(train_martrix, label_train, predict_point):
+def naive_bayes_gaussian(train_martrix, label_train, predict_point, clf=None):
     """
     :param train_martrix: 训练样本
     :param label_train: 训练样本标签
     :param predict_point: 预测样本
     :return: 预测样本标签，proba 预测概率值
     """
-    clf = GaussianNB()
-    clf.fit(train_martrix, label_train)
+    if clf == None:
+        clf = GaussianNB()
+        clf.fit(train_martrix, label_train)
     predict_label = clf.predict(predict_point)
     predict_proba = numpy.max(clf.predict_proba(predict_point))
     return predict_label, predict_proba
 
 
-def verify(train_array, train_label, predecit_point, point_label, IOshow = False):
-    predict_label, predict_proba = naive_bayes_gaussian(train_array, train_label, predecit_point)
+def verify(train_array, train_label, predecit_point, point_label, IOshow=False, clf=None):
+    predict_label, predict_proba = naive_bayes_gaussian(train_array, train_label, predecit_point, clf)
     if IOshow:
         print("point label = ")
         print(point_label)
@@ -96,24 +97,29 @@ def verifyAll(train_array, verify_array):
     train = train_martrix[:, :-1]
     label = train_martrix[:, -1] + 0.01
     label = label / (numpy.fabs(label))
+    label = label.astype(int)
+    print(label)
     label = label.reshape(-1, 1)
     count = 0
     sum = verification_martrix.shape[0]
+    clf = GaussianNB()
+    clf.fit(train, label)
     for cur in range(sum):
         point = verification_martrix[cur, :-1]
         point = point.reshape(-1, 1)
-        if verify(train, label, point,verification_martrix[cur, -1]):
+        if verify(train, label, point, verification_martrix[cur, -1], clf=clf):
             count += 1
-    print("test num : %d, succ num : %d, succ precent: %f" % (sum, count, count*1.0/sum))
-
+    print("test num : %d, succ num : %d, succ precent: %f" % (sum, count, count * 1.0 / sum))
 
 
 if __name__ == "__main__":
     data = read_file(file_path=r"./../DATA/jester-data-1.xls")
+    data = numpy.vstack((data, read_file(file_path=r"./../DATA/jester-data-2.xls")))
+    data = numpy.vstack((data, read_file(file_path=r"./../DATA/jester-data-3.xls")))
     test_martrix, verification_martrix, train_martrix = get_data(data, 0.1)
     print("Number(test,verification,train):(%d,%d,%d)" % (
         test_martrix.shape[0], verification_martrix.shape[0], train_martrix.shape[0]))
-    verifyAll(train_martrix,verification_martrix)
+    verifyAll(train_martrix, verification_martrix)
     # train_martrix = train_martrix[:, 1:]
     # verification_martrix = verification_martrix[:, 1:]
     # size = train_martrix.shape[1]
