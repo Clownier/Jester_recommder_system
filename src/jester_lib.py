@@ -1,8 +1,12 @@
 import random
 import numpy
 import time
+
+import pandas
 import xlrd
+
 numpy.seterr(divide='ignore', invalid='ignore')
+
 
 def read_file(file_path):
     """
@@ -42,7 +46,7 @@ def split_data(data, verification_proportion=0.1, label_col=-1):
     :param verification_proportion: 验证集比例
     :param label_col: 作为标签的列
     :return:
-    """    # get 100% evaluation data index
+    """  # get 100% evaluation data index
     eval_full = []
     eval_none = []
     for cur in range(data.shape[0]):
@@ -51,11 +55,18 @@ def split_data(data, verification_proportion=0.1, label_col=-1):
         else:
             eval_none.append(cur)
     data = data[:, 1:]
+    # 列随机化
+    temp_martrix = data.copy()
+    random_index = list(range(data.shape[1]))
+    random.shuffle(random_index)
+    for cur in range(data.shape[1]):
+        data[:, random_index[cur]] = temp_martrix[:, cur]
+
     assert numpy.fabs(label_col) < data.shape[1]
     if label_col < 0:
         label_col = data.shape[1] + label_col
     X = data[:, :label_col]
-    if label_col != data.shape[1]-1:
+    if label_col != data.shape[1] - 1:
         X = numpy.vstack((X, data[:, label_col + 1:]))
     Y = (data[:, label_col]).reshape(-1, 1)
     Y = Y + 0.1
@@ -63,7 +74,6 @@ def split_data(data, verification_proportion=0.1, label_col=-1):
     Y = Y.astype(int)
 
     print("current label col = %d" % label_col)
-
 
     # get verification size and copy
     verification_size = int(len(eval_full) * verification_proportion)
@@ -129,5 +139,31 @@ def verify(model, X_veri, Y_veri, carry_Point_func=(lambda x: x.reshape(1, -1)))
         if predict_succ:
             count += 1
     print("test num : %d, succ num : %d, succ precent: %f\n" % (sum, count, count * 1.0 / sum))
+    return sum, count, count * 1.0 / sum
     # time_elapsed = time.time() - since
     # print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+
+
+def sigma(model):
+    assert model is not None
+    t = model.sigma_
+    t = numpy.sum(t, axis=0)
+    print(t)
+    sortInd = t.argsort()
+    return sortInd[:int(len(sortInd) / 4)]
+
+
+def futureData(sortInd, data: object) -> object:
+    sortInd = numpy.sort(sortInd)
+    sortInd = sortInd[::-1]
+    # print(sortInd)
+    for cur in range(len(sortInd)):
+        data = numpy.delete(data, sortInd[cur], axis=1)
+    return data
+
+
+def write_to_file(data):
+    data_df = pandas.DataFrame(data)
+    writer = pandas.ExcelWriter(r"./../DATA/data_type.xlsx")
+    data_df.to_excel(writer)
+    writer.save()
